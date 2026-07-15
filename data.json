@@ -463,8 +463,27 @@
         "device_id": "7c73ef5b8d3235ae",
         "ip": "192.168.15.247, 10.12.222.8"
       }
+    ],
+    "Phát": [
+      {
+        "time": "2026-07-15 07:12:45.168380",
+        "status": "failed_notfound",
+        "device_id": "90daa551604269db",
+        "ip": "192.168.0.72, 10.12.125.207"
+      }
+    ],
+    "Phat": [
+      {
+        "time": "2026-07-15 07:12:58.612305",
+        "status": "failed_notfound",
+        "device_id": "90daa551604269db",
+        "ip": "192.168.0.72, 10.12.125.207"
+      }
     ]
   },
   "registration_history": {},
-  "ai_call_counts": {}
+  "ai_call_counts": {},
+  "user_backups": {},
+  "user_2fa": {},
+  "temp_pins": {}
 }
