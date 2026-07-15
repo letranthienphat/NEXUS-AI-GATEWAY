@@ -55,7 +55,7 @@ try:
 except Exception as e:
     ADMIN_USERNAME = "Admin2026"
     ADMIN_PASSWORD = "NexusAI@2026"
-    print(f"Warning: Encryption failed, using plaintext admin credentials. Error: {e}")
+    print(f"Warning: Encryption failed. Error: {e}")
 
 SYSTEM_PROMPT = """Bạn là NEXUS OS GATEWAY, một trợ lý AI đa năng được sáng tạo bởi Lê Trần Thiên Phát.
 Bạn KHÔNG phải là sản phẩm của Meta, OpenAI hay Google. Bạn là trí tuệ nhân tạo độc lập.
@@ -82,11 +82,11 @@ try:
     GEMINI_KEY = st.secrets.get("GEMINI_KEY", None)
     
     if not GROQ_KEYS and not GEMINI_KEY:
-        st.error("🛑 LỖI: Không tìm thấy API Key nào (GROQ_KEYS hoặc GEMINI_KEY)!")
+        st.error("🛑 LỖI: Không tìm thấy API Key nào!")
         st.stop()
         
 except Exception as e:
-    st.error(f"🛑 LỖI: Thiếu cấu hình Secrets trên Streamlit Cloud!\n{str(e)}")
+    st.error(f"🛑 LỖI: Thiếu cấu hình Secrets!\n{str(e)}")
     st.stop()
 
 st.set_page_config(
@@ -96,43 +96,81 @@ st.set_page_config(
     page_icon="🚀"
 )
 
-# ================== CSS GIAO DIỆN TỐI ƯU ==================
+# ================== CSS GIAO DIỆN - TỐI ƯU TƯƠNG PHẢN ==================
 st.markdown("""
 <style>
-    /* Reset & Base */
-    * { 
-        margin: 0; 
-        padding: 0; 
-        box-sizing: border-box; 
+    /* RESET ALL */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
     
-    /* Font chữ tổng thể */
-    html, body, .stApp, div, p, span, label, input, textarea, button {
+    /* FORCE ALL TEXT TO BE WHITE ON DARK BACKGROUND */
+    html, body, .stApp, div, p, span, label, input, textarea, button,
+    .stMarkdown, .stTextInput, .stTextArea, .stSelectbox, .stDateInput,
+    .stNumberInput, .stCheckbox, .stRadio, .stMultiSelect,
+    .stFileUploader, .stAlert, .stException, .stCodeBlock,
+    .streamlit-expanderHeader, .streamlit-expanderContent {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-        color: #f0f0f0 !important;
+        color: #ffffff !important;
     }
     
+    /* APP BACKGROUND */
     .stApp {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        background: linear-gradient(135deg, #0a0a1a, #1a1a3e, #0d0d2b) !important;
         min-height: 100vh;
     }
     
-    /* Sidebar */
-    .css-1d391kg, .css-12oz5g7, [data-testid="stSidebar"] {
-        background: rgba(20, 20, 40, 0.95) !important;
+    /* SIDEBAR - DARKER */
+    [data-testid="stSidebar"] {
+        background: rgba(10, 10, 30, 0.98) !important;
         backdrop-filter: blur(10px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
     }
     
-    [data-testid="stSidebar"] .stMarkdown, 
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] div,
-    [data-testid="stSidebar"] input {
-        color: #e8e8e8 !important;
+    [data-testid="stSidebar"] * {
+        color: #ffffff !important;
     }
     
-    /* Password input - QUAN TRỌNG */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4,
+    [data-testid="stSidebar"] h5,
+    [data-testid="stSidebar"] h6 {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #ffffff !important;
+    }
+    
+    /* ALL INPUT FIELDS - DARK BACKGROUND, WHITE TEXT */
+    input, textarea, select {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        padding: 12px 16px !important;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15) !important;
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+    
+    input::placeholder, textarea::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+        font-weight: 300 !important;
+    }
+    
+    /* SPECIFIC - PASSWORD INPUT */
     input[type="password"] {
         background: rgba(255, 255, 255, 0.08) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -146,17 +184,17 @@ st.markdown("""
     
     input[type="password"]:focus {
         border-color: #667eea !important;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15) !important;
         color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.12) !important;
     }
     
     input[type="password"]::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
-        font-weight: 300 !important;
+        color: rgba(255, 255, 255, 0.5) !important;
     }
     
-    /* Text input */
-    input[type="text"], input:not([type]) {
+    /* TEXT INPUT */
+    input[type="text"] {
         background: rgba(255, 255, 255, 0.08) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px !important;
@@ -165,74 +203,111 @@ st.markdown("""
         font-size: 15px !important;
     }
     
-    input[type="text"]:focus, input:not([type]):focus {
+    input[type="text"]:focus {
         border-color: #667eea !important;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15) !important;
         color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.12) !important;
     }
     
-    input[type="text"]::placeholder, input:not([type])::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
+    input[type="text"]::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
     }
     
-    /* Textarea */
+    /* TEXTAREA */
     .stTextArea > div > div > textarea {
         background: rgba(255, 255, 255, 0.08) !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px !important;
-        color: #f0f0f0 !important;
+        color: #ffffff !important;
         padding: 12px 16px !important;
         font-size: 14px !important;
-        font-family: inherit !important;
     }
     
     .stTextArea > div > div > textarea:focus {
         border-color: #667eea !important;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15) !important;
         color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.12) !important;
     }
     
     .stTextArea > div > div > textarea::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
+        color: rgba(255, 255, 255, 0.5) !important;
     }
     
-    /* Cards */
+    /* LABELS - FORCE WHITE */
+    label, .stLabel, .stTextInput label, .stTextArea label,
+    .stSelectbox label, .stCheckbox label, .stRadio label {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        font-family: inherit !important;
+    }
+    
+    /* BUTTONS */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 10px 25px !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        font-family: inherit !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5) !important;
+        background: linear-gradient(135deg, #7b8ef0, #8b5fbf) !important;
+        color: #ffffff !important;
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0px) !important;
+    }
+    
+    /* CARDS - GLASS EFFECT */
     .glass-card {
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.06) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 20px !important;
+        padding: 25px !important;
+        margin-bottom: 20px !important;
+        transition: all 0.3s ease !important;
     }
     
     .glass-card:hover {
-        background: rgba(255, 255, 255, 0.12);
-        transform: translateY(-2px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.10) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
     }
     
-    .glass-card p, .glass-card div, .glass-card span {
-        color: #f0f0f0 !important;
+    .glass-card * {
+        color: #ffffff !important;
     }
     
-    /* Chat */
+    /* CHAT CONTAINER */
     .chat-container {
-        background: rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 20px;
-        min-height: 500px;
-        max-height: 600px;
-        overflow-y: auto;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.4) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 20px !important;
+        padding: 20px !important;
+        min-height: 500px !important;
+        max-height: 600px !important;
+        overflow-y: auto !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
     }
     
+    /* MESSAGES */
     .message {
-        margin-bottom: 16px;
-        display: flex;
-        animation: slideIn 0.3s ease;
+        margin-bottom: 16px !important;
+        display: flex !important;
+        animation: slideIn 0.3s ease !important;
     }
     
     @keyframes slideIn {
@@ -240,295 +315,302 @@ st.markdown("""
         to { opacity: 1; transform: translateY(0); }
     }
     
-    .message.user { justify-content: flex-end; }
-    .message.assistant { justify-content: flex-start; }
+    .message.user { justify-content: flex-end !important; }
+    .message.assistant { justify-content: flex-start !important; }
     
     .message-bubble {
-        max-width: 75%;
-        padding: 12px 20px;
-        border-radius: 20px;
-        word-wrap: break-word;
-        line-height: 1.6;
-        font-size: 14px;
-        font-weight: 400;
+        max-width: 75% !important;
+        padding: 12px 20px !important;
+        border-radius: 20px !important;
+        word-wrap: break-word !important;
+        line-height: 1.6 !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
     }
     
     .message.user .message-bubble {
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
         color: #ffffff !important;
-        border-bottom-right-radius: 4px;
-        font-weight: 500;
+        border-bottom-right-radius: 4px !important;
+        font-weight: 500 !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
     }
     
     .message.assistant .message-bubble {
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.08) !important;
         color: #f0f0f0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-bottom-left-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-bottom-left-radius: 4px !important;
     }
     
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: #ffffff !important;
-        border: none;
-        border-radius: 50px;
-        padding: 10px 25px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        width: 100%;
-        font-size: 14px;
-        font-family: inherit !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        color: #ffffff !important;
-    }
-    
-    /* Labels */
-    label, .stLabel {
-        color: #d0d0d0 !important;
-        font-weight: 500 !important;
-        font-size: 14px !important;
-        font-family: inherit !important;
-    }
-    
-    /* Titles */
-    .main-title {
-        font-size: 3rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    
-    .sub-title {
-        color: rgba(255, 255, 255, 0.7) !important;
-        text-align: center;
-        font-size: 1.1rem;
-        margin-bottom: 30px;
-    }
-    
-    /* Badges */
+    /* BADGES */
     .badge {
-        display: inline-block;
-        padding: 4px 14px;
-        border-radius: 50px;
-        font-size: 12px;
-        font-weight: 600;
+        display: inline-block !important;
+        padding: 4px 14px !important;
+        border-radius: 50px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
     }
     
     .badge-pro {
-        background: linear-gradient(135deg, #f093fb, #f5576c);
+        background: linear-gradient(135deg, #f093fb, #f5576c) !important;
         color: #ffffff !important;
     }
     
     .badge-free {
-        background: rgba(255, 255, 255, 0.1);
-        color: #b0b0b0 !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #d0d0d0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
     
     .badge-admin {
-        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        background: linear-gradient(135deg, #4facfe, #00f2fe) !important;
         color: #ffffff !important;
     }
     
     .badge-guest {
-        background: rgba(255, 215, 0, 0.2);
+        background: rgba(255, 215, 0, 0.15) !important;
         color: #ffd700 !important;
-        border: 1px solid rgba(255, 215, 0, 0.3);
+        border: 1px solid rgba(255, 215, 0, 0.2) !important;
     }
     
-    /* Cloud */
-    .cloud-item {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        padding: 12px 16px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    /* TITLES */
+    .main-title {
+        font-size: 3rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(135deg, #a8c0ff, #3f2b96) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        text-align: center !important;
+        margin-bottom: 10px !important;
     }
     
-    .cloud-item:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(102, 126, 234, 0.3);
+    .sub-title {
+        color: rgba(255, 255, 255, 0.7) !important;
+        text-align: center !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 30px !important;
     }
     
-    .cloud-item .name {
-        color: #e8e8e8 !important;
-        font-weight: 500;
-    }
-    
-    .cloud-item .size {
-        color: rgba(255, 255, 255, 0.4) !important;
-        font-size: 12px;
-    }
-    
-    /* Progress */
+    /* PROGRESS BAR */
     .stProgress > div > div > div > div {
         background: linear-gradient(135deg, #667eea, #764ba2) !important;
     }
     
-    /* Scrollbar */
+    .stProgress > div > div > div {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .stProgress label {
+        color: #ffffff !important;
+    }
+    
+    /* SCROLLBAR */
     ::-webkit-scrollbar {
-        width: 6px;
+        width: 6px !important;
     }
     
     ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 10px !important;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 10px;
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        border-radius: 10px !important;
     }
     
-    /* Expander */
+    /* EXPANDER */
     .streamlit-expanderHeader {
-        color: #e8e8e8 !important;
-        font-weight: 500 !important;
-        font-family: inherit !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
+        padding: 10px 15px !important;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
     }
     
     .streamlit-expanderContent {
-        color: #d0d0d0 !important;
+        color: #ffffff !important;
+        padding-top: 15px !important;
     }
     
-    /* Checkbox */
+    /* CHECKBOX */
     .stCheckbox label {
-        color: #d0d0d0 !important;
-        font-family: inherit !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
     }
     
-    /* Selectbox */
+    .stCheckbox input[type="checkbox"] {
+        accent-color: #667eea !important;
+    }
+    
+    /* SELECTBOX */
     .stSelectbox label {
-        color: #d0d0d0 !important;
-        font-family: inherit !important;
+        color: #ffffff !important;
     }
     
     .stSelectbox select {
         background: rgba(255, 255, 255, 0.08) !important;
-        color: #f0f0f0 !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px !important;
         padding: 8px 12px !important;
-        font-family: inherit !important;
     }
     
-    /* Tabs */
+    .stSelectbox select option {
+        background: #1a1a3e !important;
+        color: #ffffff !important;
+    }
+    
+    /* TABS */
     .stTabs [data-baseweb="tab-list"] button {
-        color: #a0a0a0 !important;
-        font-weight: 500 !important;
-        font-family: inherit !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 10px 20px !important;
     }
     
     .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
         color: #ffffff !important;
-        border-bottom-color: #667eea !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-bottom: 3px solid #667eea !important;
     }
     
-    /* File uploader */
+    .stTabs [data-baseweb="tab-list"] button:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+    
+    /* FILE UPLOADER */
     .stFileUploader label {
-        color: #d0d0d0 !important;
-        font-family: inherit !important;
+        color: #ffffff !important;
     }
     
-    /* Alerts */
+    .stFileUploader > div > div {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 2px dashed rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+    }
+    
+    .stFileUploader > div > div:hover {
+        border-color: #667eea !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+    
+    /* ALERTS */
     .stAlert {
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        padding: 15px 20px !important;
         color: #ffffff !important;
     }
     
     .stAlert p {
         color: #ffffff !important;
-        font-family: inherit !important;
     }
     
-    /* Info, Success, Warning, Error */
+    /* SUCCESS ALERT */
     .stAlert[data-baseweb="notification"] {
-        font-family: inherit !important;
+        background: rgba(16, 185, 129, 0.15) !important;
+        border-left: 4px solid #10b981 !important;
+        color: #ffffff !important;
     }
     
-    /* Code blocks */
+    /* ERROR ALERT */
+    .stAlert[data-baseweb="notification"][kind="error"] {
+        background: rgba(239, 68, 68, 0.15) !important;
+        border-left: 4px solid #ef4444 !important;
+        color: #ffffff !important;
+    }
+    
+    /* WARNING ALERT */
+    .stAlert[data-baseweb="notification"][kind="warning"] {
+        background: rgba(245, 158, 11, 0.15) !important;
+        border-left: 4px solid #f59e0b !important;
+        color: #ffffff !important;
+    }
+    
+    /* INFO ALERT */
+    .stAlert[data-baseweb="notification"][kind="info"] {
+        background: rgba(59, 130, 246, 0.15) !important;
+        border-left: 4px solid #3b82f6 !important;
+        color: #ffffff !important;
+    }
+    
+    /* CODE BLOCK */
     .stCodeBlock {
         background: rgba(0, 0, 0, 0.3) !important;
         color: #f0f0f0 !important;
-        font-family: 'Courier New', monospace !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
+        padding: 15px !important;
     }
     
-    /* Number input */
+    .stCodeBlock code {
+        color: #f0f0f0 !important;
+    }
+    
+    /* NUMBER INPUT */
     .stNumberInput input {
         background: rgba(255, 255, 255, 0.08) !important;
-        color: #f0f0f0 !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px !important;
         padding: 8px 12px !important;
-        font-family: inherit !important;
     }
     
-    /* Date input */
+    .stNumberInput input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15) !important;
+    }
+    
+    /* DATE INPUT */
     .stDateInput input {
         background: rgba(255, 255, 255, 0.08) !important;
-        color: #f0f0f0 !important;
+        color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px !important;
         padding: 8px 12px !important;
-        font-family: inherit !important;
     }
     
-    /* Popover */
-    .stPopover {
-        background: rgba(20, 20, 40, 0.95) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-    }
-    
-    .stPopover p, .stPopover div, .stPopover label {
-        color: #f0f0f0 !important;
-    }
-    
-    /* Sidebar headers */
-    .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, 
-    .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-family: inherit !important;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title { font-size: 2rem; }
-        .glass-card { padding: 15px; }
-        input[type="password"], input[type="text"] {
-            font-size: 14px !important;
-            padding: 10px 14px !important;
-        }
-    }
-    
-    /* Fix for password visibility toggle */
-    .stTextInput > div > div > div > input {
-        background: rgba(255, 255, 255, 0.08) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 12px !important;
-        padding: 12px 16px !important;
-        font-size: 15px !important;
-    }
-    
-    .stTextInput > div > div > div > input:focus {
+    .stDateInput input:focus {
         border-color: #667eea !important;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15) !important;
     }
     
-    .stTextInput > div > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
+    /* POPOVER */
+    .stPopover {
+        background: rgba(10, 10, 30, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 16px !important;
+        padding: 20px !important;
+    }
+    
+    .stPopover * {
+        color: #ffffff !important;
+    }
+    
+    /* DIVIDER */
+    hr {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        margin: 15px 0 !important;
+    }
+    
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .main-title { font-size: 2rem !important; }
+        .glass-card { padding: 15px !important; }
+        input, textarea { font-size: 14px !important; padding: 10px 14px !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -818,7 +900,6 @@ def download_files_cloud(file_paths: List[str]) -> bytes:
 
 # ================== HÀM QUẢN LÝ MÃ PRO ==================
 def delete_pro_code(code_to_delete: str) -> bool:
-    """Xóa mã PRO khỏi danh sách"""
     codes = st.session_state.data.get("codes", [])
     for i, c in enumerate(codes):
         if isinstance(c, dict) and c.get("code") == code_to_delete:
@@ -1517,17 +1598,14 @@ elif st.session_state.page == "SETTINGS":
                 for c in st.session_state.data["codes"]:
                     if isinstance(c, dict) and c.get("code") == code:
                         found = True
-                        # Kiểm tra expiry
                         if c.get("expiry"):
                             expiry_date = datetime.fromisoformat(c.get("expiry"))
                             if datetime.now() > expiry_date:
                                 st.error("❌ Mã đã hết hạn!")
                                 break
-                        # Kiểm tra số lần sử dụng
                         if c.get("max_uses") and len(c.get("used_by", [])) >= c.get("max_uses"):
                             st.error("❌ Mã đã hết lượt sử dụng!")
                             break
-                        # Kích hoạt
                         if st.session_state.user not in st.session_state.data["pro_users"]:
                             st.session_state.data["pro_users"].append(st.session_state.user)
                             c["used_by"] = c.get("used_by", []) + [st.session_state.user]
@@ -1588,7 +1666,6 @@ elif st.session_state.page == "ADMIN":
                 max_uses = st.number_input("Số lần sử dụng", min_value=1, value=1) if has_limit else None
             
             if st.button("🎁 Tạo mã", use_container_width=True) and new_code:
-                # Kiểm tra mã đã tồn tại
                 exists = False
                 for c in st.session_state.data["codes"]:
                     if isinstance(c, dict) and c.get("code") == new_code:
@@ -1627,7 +1704,6 @@ elif st.session_state.page == "ADMIN":
                         used = len(c.get('used_by', []))
                         max_txt = str(c.get('max_uses')) if c.get('max_uses') else "∞"
                         
-                        # Hiển thị trạng thái
                         is_expired = False
                         if c.get('expiry'):
                             try:
@@ -1647,13 +1723,11 @@ elif st.session_state.page == "ADMIN":
                         col3.write(f"📊 {used}/{max_txt}")
                         col4.write(f"{status_emoji} {status_text}")
                         
-                        # Nút xóa
                         if col4.button(f"🗑️ Xóa", key=f"del_code_{i}"):
                             if delete_pro_code(code):
                                 st.success(f"✅ Đã xóa mã `{code}`")
                                 st.rerun()
                     else:
-                        # Trường hợp code là string (tương thích ngược)
                         col1.write(f"**{c}**")
                         col2.write("Vĩnh viễn")
                         col3.write("∞")
@@ -1680,7 +1754,6 @@ elif st.session_state.page == "ADMIN":
                 if username != ADMIN_USERNAME:
                     col4_1, col4_2 = st.columns(2)
                     with col4_1:
-                        # Nút toggle PRO
                         if is_pro_user:
                             if st.button(f"⬇️ Hạ PRO", key=f"downgrade_{username}", use_container_width=True):
                                 if username in st.session_state.data["pro_users"]:
