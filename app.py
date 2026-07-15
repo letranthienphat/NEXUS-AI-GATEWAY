@@ -30,9 +30,8 @@ CONFIG = {
     "LOCKOUT_TIME": 15,
 }
 
-# ================== MÃ HÓA ADMIN (SỬA LỖI FERNET) ==================
+# ================== MÃ HÓA ADMIN ==================
 def generate_fernet_key():
-    """Tạo Fernet key từ password cố định"""
     password = b"nexus-os-gateway-2026-secure-password"
     salt = b"nexus-salt-2026"
     kdf = PBKDF2HMAC(
@@ -44,20 +43,16 @@ def generate_fernet_key():
     key = base64.urlsafe_b64encode(kdf.derive(password))
     return key
 
-# Tạo key và cipher
 try:
     ENCRYPTION_KEY = generate_fernet_key()
     cipher = Fernet(ENCRYPTION_KEY)
     
-    # Mã hóa thông tin admin
     ADMIN_USERNAME_ENCRYPTED = cipher.encrypt(b"Admin2026")
     ADMIN_PASSWORD_ENCRYPTED = cipher.encrypt(b"NexusAI@2026")
     
-    # Giải mã để sử dụng
     ADMIN_USERNAME = cipher.decrypt(ADMIN_USERNAME_ENCRYPTED).decode()
     ADMIN_PASSWORD = cipher.decrypt(ADMIN_PASSWORD_ENCRYPTED).decode()
 except Exception as e:
-    # Fallback nếu có lỗi mã hóa
     ADMIN_USERNAME = "Admin2026"
     ADMIN_PASSWORD = "NexusAI@2026"
     print(f"Warning: Encryption failed, using plaintext admin credentials. Error: {e}")
@@ -78,17 +73,14 @@ try:
     GH_TOKEN = st.secrets["GH_TOKEN"]
     GH_REPO = st.secrets["GH_REPO"]
     
-    # Lấy Groq API Keys
     GROQ_KEYS = st.secrets.get("GROQ_KEYS", [])
     if isinstance(GROQ_KEYS, str):
         GROQ_KEYS = [GROQ_KEYS]
     elif not isinstance(GROQ_KEYS, list):
         GROQ_KEYS = []
     
-    # Lấy Gemini API Key
     GEMINI_KEY = st.secrets.get("GEMINI_KEY", None)
     
-    # Kiểm tra có ít nhất 1 API key
     if not GROQ_KEYS and not GEMINI_KEY:
         st.error("🛑 LỖI: Không tìm thấy API Key nào (GROQ_KEYS hoặc GEMINI_KEY)!")
         st.stop()
@@ -104,11 +96,21 @@ st.set_page_config(
     page_icon="🚀"
 )
 
-# ================== CSS GIAO DIỆN ==================
+# ================== CSS GIAO DIỆN VỚI FONT TƯƠNG PHẢN CAO ==================
 st.markdown("""
 <style>
     /* Reset & Base */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+    }
+    
+    /* Font chữ tổng thể - tăng độ tương phản */
+    body, .stApp, div, p, span, label, .stMarkdown {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+        color: #f0f0f0 !important;
+    }
     
     .stApp {
         background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
@@ -116,10 +118,18 @@ st.markdown("""
     }
     
     /* Sidebar */
-    .css-1d391kg, .css-12oz5g7 {
-        background: rgba(255, 255, 255, 0.05) !important;
+    .css-1d391kg, .css-12oz5g7, [data-testid="stSidebar"] {
+        background: rgba(20, 20, 40, 0.95) !important;
         backdrop-filter: blur(10px);
         border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Sidebar text */
+    [data-testid="stSidebar"] .stMarkdown, 
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] div {
+        color: #e8e8e8 !important;
     }
     
     /* Cards */
@@ -139,16 +149,20 @@ st.markdown("""
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
     
+    .glass-card p, .glass-card div, .glass-card span {
+        color: #f0f0f0 !important;
+    }
+    
     /* Chat Messages */
     .chat-container {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
         border-radius: 20px;
         padding: 20px;
         min-height: 500px;
         max-height: 600px;
         overflow-y: auto;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
     
     .message {
@@ -172,17 +186,19 @@ st.markdown("""
         word-wrap: break-word;
         line-height: 1.6;
         font-size: 14px;
+        font-weight: 400;
     }
     
     .message.user .message-bubble {
         background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
+        color: #ffffff !important;
         border-bottom-right-radius: 4px;
+        font-weight: 500;
     }
     
     .message.assistant .message-bubble {
-        background: rgba(255, 255, 255, 0.1);
-        color: #e0e0e0;
+        background: rgba(255, 255, 255, 0.12);
+        color: #f0f0f0 !important;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-bottom-left-radius: 4px;
     }
@@ -190,34 +206,50 @@ st.markdown("""
     /* Buttons */
     .stButton > button {
         background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
+        color: #ffffff !important;
         border: none;
         border-radius: 50px;
         padding: 10px 25px;
         font-weight: 600;
         transition: all 0.3s ease;
         width: 100%;
+        font-size: 14px;
     }
     
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        color: #ffffff !important;
     }
     
     /* Inputs */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px;
-        color: #e0e0e0;
+        color: #f0f0f0 !important;
         padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .stTextInput > div > div > input::placeholder,
+    .stTextArea > div > div > textarea::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
     }
     
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        color: #ffffff !important;
+    }
+    
+    /* Labels */
+    label, .stLabel {
+        color: #d0d0d0 !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
     }
     
     /* Titles */
@@ -232,7 +264,7 @@ st.markdown("""
     }
     
     .sub-title {
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(255, 255, 255, 0.7) !important;
         text-align: center;
         font-size: 1.1rem;
         margin-bottom: 30px;
@@ -249,22 +281,22 @@ st.markdown("""
     
     .badge-pro {
         background: linear-gradient(135deg, #f093fb, #f5576c);
-        color: white;
+        color: #ffffff !important;
     }
     
     .badge-free {
         background: rgba(255, 255, 255, 0.1);
-        color: #a0a0a0;
+        color: #b0b0b0 !important;
     }
     
     .badge-admin {
         background: linear-gradient(135deg, #4facfe, #00f2fe);
-        color: white;
+        color: #ffffff !important;
     }
     
     .badge-guest {
         background: rgba(255, 215, 0, 0.2);
-        color: #ffd700;
+        color: #ffd700 !important;
         border: 1px solid rgba(255, 215, 0, 0.3);
     }
     
@@ -284,6 +316,16 @@ st.markdown("""
     .cloud-item:hover {
         background: rgba(255, 255, 255, 0.08);
         border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .cloud-item .name {
+        color: #e8e8e8 !important;
+        font-weight: 500;
+    }
+    
+    .cloud-item .size {
+        color: rgba(255, 255, 255, 0.4) !important;
+        font-size: 12px;
     }
     
     /* Progress bar */
@@ -321,6 +363,68 @@ st.markdown("""
         .main-title { font-size: 2rem; }
         .glass-card { padding: 15px; }
     }
+    
+    /* Sidebar text colors */
+    .css-1d391kg p, .css-1d391kg div, .css-1d391kg span {
+        color: #e8e8e8 !important;
+    }
+    
+    /* Headers in sidebar */
+    .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, 
+    .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        color: #e8e8e8 !important;
+        font-weight: 500 !important;
+    }
+    
+    .streamlit-expanderContent {
+        color: #d0d0d0 !important;
+    }
+    
+    /* Checkbox */
+    .stCheckbox label {
+        color: #d0d0d0 !important;
+    }
+    
+    /* Info/Warning/Success boxes */
+    .stAlert {
+        color: #ffffff !important;
+    }
+    
+    .stAlert p {
+        color: #ffffff !important;
+    }
+    
+    /* Code blocks */
+    .stCodeBlock {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: #f0f0f0 !important;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] button {
+        color: #a0a0a0 !important;
+        font-weight: 500 !important;
+    }
+    
+    .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
+        color: #ffffff !important;
+        border-bottom-color: #667eea !important;
+    }
+    
+    /* File uploader */
+    .stFileUploader label {
+        color: #d0d0d0 !important;
+    }
+    
+    .stFileUploader div {
+        color: #d0d0d0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -332,18 +436,16 @@ if 'last_backup_time' not in st.session_state:
 if 'pending_save_data' not in st.session_state:
     st.session_state.pending_save_data = None
 if 'api_used' not in st.session_state:
-    st.session_state.api_used = "Groq"  # Mặc định dùng Groq
+    st.session_state.api_used = "Groq"
 
 # ================== HÀM XỬ LÝ AI ==================
 def call_ai_groq(messages: List[Dict]) -> str:
-    """Gọi AI qua Groq API"""
     try:
         from openai import OpenAI
         
         if not GROQ_KEYS:
             return "❌ Không có Groq API key nào!"
         
-        # Chọn ngẫu nhiên một key từ danh sách
         api_key = random.choice(GROQ_KEYS)
         client = OpenAI(
             api_key=api_key,
@@ -361,7 +463,6 @@ def call_ai_groq(messages: List[Dict]) -> str:
         return f"❌ Lỗi Groq API: {str(e)}"
 
 def call_ai_gemini(messages: List[Dict]) -> str:
-    """Gọi AI qua Gemini API"""
     try:
         if not GEMINI_KEY:
             return "❌ Không có Gemini API key!"
@@ -370,7 +471,6 @@ def call_ai_gemini(messages: List[Dict]) -> str:
         genai.configure(api_key=GEMINI_KEY)
         model = genai.GenerativeModel('gemini-pro')
         
-        # Chuyển đổi messages cho Gemini
         prompt = SYSTEM_PROMPT + "\n\n"
         for m in messages:
             role = "User" if m.get("role") == "user" else "Assistant"
@@ -383,8 +483,6 @@ def call_ai_gemini(messages: List[Dict]) -> str:
         return f"❌ Lỗi Gemini API: {str(e)}"
 
 def call_ai(messages: List[Dict]) -> str:
-    """Gọi AI với fallback giữa Groq và Gemini"""
-    # Ưu tiên Groq trước
     if GROQ_KEYS:
         try:
             result = call_ai_groq(messages)
@@ -394,7 +492,6 @@ def call_ai(messages: List[Dict]) -> str:
         except:
             pass
     
-    # Fallback sang Gemini nếu Groq thất bại
     if GEMINI_KEY:
         try:
             result = call_ai_gemini(messages)
@@ -657,7 +754,6 @@ def init_session():
     if 'selected_files' not in st.session_state:
         st.session_state.selected_files = []
     
-    # Xử lý query params
     if st.query_params.get("delete_chat"):
         try:
             chat_id = int(st.query_params.get("delete_chat"))
@@ -710,8 +806,8 @@ with st.sidebar:
     st.markdown(f"""
     <div style="text-align: center; padding: 20px 0;">
         <div style="font-size: 2.5rem;">🚀</div>
-        <div style="font-size: 1.5rem; font-weight: 700; color: white;">{CONFIG['NAME']}</div>
-        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.4);">
+        <div style="font-size: 1.5rem; font-weight: 700; color: #ffffff;">{CONFIG['NAME']}</div>
+        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">
             v{CONFIG['VERSION']} · by {CONFIG['CREATOR']}
         </div>
     </div>
@@ -720,7 +816,6 @@ with st.sidebar:
     if st.session_state.user:
         info = st.session_state.data["users"][st.session_state.user]["info"] if not st.session_state.guest_mode else None
         
-        # Avatar
         if info and info.get("avatar"):
             st.markdown(f"""
             <div style="text-align: center; margin: 10px 0;">
@@ -734,18 +829,16 @@ with st.sidebar:
             <div style="text-align: center; font-size: 3rem; margin: 10px 0;">👤</div>
             """, unsafe_allow_html=True)
         
-        # User info
         display_name = info.get('name', st.session_state.user) if info else st.session_state.user
         st.markdown(f"""
         <div style="text-align: center;">
-            <div style="color: white; font-weight: 600; font-size: 1.1rem;">{display_name}</div>
+            <div style="color: #ffffff; font-weight: 600; font-size: 1.1rem;">{display_name}</div>
             <div style="margin-top: 5px;">{get_badge()}</div>
         </div>
         """, unsafe_allow_html=True)
         
         st.divider()
         
-        # Navigation
         st.markdown("### 🚀 ĐIỀU HƯỚNG")
         nav_items = [
             ("🏠", "Trang chính", "DASHBOARD"),
@@ -765,7 +858,6 @@ with st.sidebar:
         
         st.divider()
         
-        # Quick Chat
         st.markdown("### 💬 NHANH")
         with st.form(key="quick_chat", clear_on_submit=True):
             quick_msg = st.text_input("", placeholder="Nhập tin nhắn...", key="quick_input")
@@ -783,7 +875,6 @@ with st.sidebar:
             st.rerun()
     
     else:
-        # Login form
         st.markdown("### 🔐 ĐĂNG NHẬP")
         with st.form("login_form"):
             login_user = st.text_input("Tài khoản", placeholder="Nhập tên đăng nhập")
@@ -823,13 +914,11 @@ with st.sidebar:
                 else:
                     st.error("❌ Tài khoản không tồn tại")
         
-        # Guest mode
         if st.button("👤 DÙNG THỬ", use_container_width=True):
             st.session_state.user = "guest"
             st.session_state.guest_mode = True
             st.rerun()
         
-        # Register
         with st.expander("📝 Đăng ký"):
             reg_user = st.text_input("Tên đăng nhập", key="reg_user")
             reg_pass = st.text_input("Mật khẩu", type="password", key="reg_pass")
@@ -862,7 +951,6 @@ with st.sidebar:
                         st.success("✅ Đăng ký thành công! Hãy đăng nhập.")
 
 # ================== MAIN CONTENT ==================
-# Header
 st.markdown(f"""
 <div style="text-align: center; padding: 20px 0 10px 0;">
     <div class="main-title">🚀 {CONFIG['NAME']}</div>
@@ -879,10 +967,10 @@ if st.session_state.page == "DASHBOARD":
         <div class="glass-card fade-in">
             <div style="text-align: center;">
                 <div style="font-size: 3rem;">🧠</div>
-                <div style="color: white; font-size: 1.3rem; font-weight: 600; margin: 10px 0;">
+                <div style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 10px 0;">
                     Chat AI
                 </div>
-                <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 15px;">
+                <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 15px;">
                     Trò chuyện với trợ lý AI thông minh
                 </div>
             </div>
@@ -896,10 +984,10 @@ if st.session_state.page == "DASHBOARD":
         <div class="glass-card fade-in">
             <div style="text-align: center;">
                 <div style="font-size: 3rem;">☁️</div>
-                <div style="color: white; font-size: 1.3rem; font-weight: 600; margin: 10px 0;">
+                <div style="color: #ffffff; font-size: 1.3rem; font-weight: 600; margin: 10px 0;">
                     Lưu trữ Cloud
                 </div>
-                <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 15px;">
+                <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 15px;">
                     Quản lý file trên đám mây an toàn
                 </div>
             </div>
@@ -908,7 +996,6 @@ if st.session_state.page == "DASHBOARD":
         if st.button("☁️ Vào Lưu trữ", key="btn_cloud", use_container_width=True):
             go_to("CLOUD")
     
-    # Stats
     if st.session_state.user and not st.session_state.guest_mode:
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
@@ -919,8 +1006,8 @@ if st.session_state.page == "DASHBOARD":
             st.markdown(f"""
             <div class="glass-card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 2rem;">💬</div>
-                <div style="color: white; font-size: 1.5rem; font-weight: 700;">{chat_count}</div>
-                <div style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">Cuộc trò chuyện</div>
+                <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700;">{chat_count}</div>
+                <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Cuộc trò chuyện</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -930,8 +1017,8 @@ if st.session_state.page == "DASHBOARD":
             st.markdown(f"""
             <div class="glass-card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 2rem;">📊</div>
-                <div style="color: white; font-size: 1.5rem; font-weight: 700;">{used_gb:.1f} GB</div>
-                <div style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">Đã sử dụng</div>
+                <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700;">{used_gb:.1f} GB</div>
+                <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Đã sử dụng</div>
             </div>
             """, unsafe_allow_html=True)
         
@@ -940,8 +1027,8 @@ if st.session_state.page == "DASHBOARD":
             st.markdown(f"""
             <div class="glass-card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 2rem;">{'⭐' if is_pro else '📦'}</div>
-                <div style="color: white; font-size: 1.5rem; font-weight: 700;">{status}</div>
-                <div style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">Gói dịch vụ</div>
+                <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700;">{status}</div>
+                <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Gói dịch vụ</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -949,14 +1036,13 @@ if st.session_state.page == "DASHBOARD":
 elif st.session_state.page == "CHAT":
     st.markdown("""
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div style="color: white; font-size: 1.5rem; font-weight: 700;">🧠 Chat AI</div>
-        <div style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+        <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700;">🧠 Chat AI</div>
+        <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">
             API: {api}
         </div>
     </div>
     """.format(api=st.session_state.api_used), unsafe_allow_html=True)
     
-    # Chat history sidebar
     with st.sidebar:
         st.markdown("### 📝 LỊCH SỬ")
         
@@ -1005,7 +1091,6 @@ elif st.session_state.page == "CHAT":
                         </button>
                         """, unsafe_allow_html=True)
     
-    # Chat messages
     if st.session_state.guest_mode:
         chat = st.session_state.temp_chat
     else:
@@ -1016,15 +1101,16 @@ elif st.session_state.page == "CHAT":
         else:
             chat = None
     
-    # Display messages
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     
     if chat is None or not chat.get("messages"):
         st.markdown("""
-        <div style="text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.3);">
+        <div style="text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.4);">
             <div style="font-size: 4rem; margin-bottom: 20px;">💬</div>
-            <div style="font-size: 1.2rem;">Chưa có tin nhắn</div>
-            <div style="font-size: 0.9rem; margin-top: 10px;">Hãy nhập câu hỏi để bắt đầu trò chuyện</div>
+            <div style="font-size: 1.2rem; color: rgba(255,255,255,0.6);">Chưa có tin nhắn</div>
+            <div style="font-size: 0.9rem; margin-top: 10px; color: rgba(255,255,255,0.3);">
+                Hãy nhập câu hỏi để bắt đầu trò chuyện
+            </div>
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -1040,7 +1126,6 @@ elif st.session_state.page == "CHAT":
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Process pending message
     if st.session_state.get("pending_message"):
         p = st.session_state.pending_message
         uploaded_file = st.session_state.get("pending_file")
@@ -1082,7 +1167,7 @@ elif st.session_state.page == "CHAT":
 # ================== CLOUD ==================
 elif st.session_state.page == "CLOUD":
     st.markdown("""
-    <div style="color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
+    <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
         ☁️ Lưu trữ đám mây
     </div>
     """, unsafe_allow_html=True)
@@ -1090,7 +1175,6 @@ elif st.session_state.page == "CLOUD":
     if st.session_state.guest_mode:
         st.warning("🔒 Guest không thể sử dụng lưu trữ đám mây. Vui lòng đăng ký tài khoản!")
     else:
-        # Storage info
         used = get_used_storage(st.session_state.user)
         limit = CONFIG["PRO_STORAGE_LIMIT"] if is_pro else CONFIG["FREE_STORAGE_LIMIT"]
         used_gb = used / (1024**3)
@@ -1101,11 +1185,10 @@ elif st.session_state.page == "CLOUD":
             text=f"📊 Đã dùng: {used_gb:.2f} GB / {limit_gb} GB"
         )
         
-        # Navigation
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
             st.markdown(f"""
-            <div style="color: rgba(255,255,255,0.6); padding: 8px 0;">
+            <div style="color: rgba(255,255,255,0.7); padding: 8px 0;">
                 📁 /{st.session_state.current_dir}
             </div>
             """, unsafe_allow_html=True)
@@ -1124,10 +1207,8 @@ elif st.session_state.page == "CLOUD":
                     else:
                         st.error("❌ Thư mục đã tồn tại")
         
-        # List contents
         items = list_directory(st.session_state.current_dir, st.session_state.user)
         
-        # Folders
         if items["folders"]:
             st.markdown("### 📁 Thư mục")
             for folder in items["folders"]:
@@ -1142,7 +1223,6 @@ elif st.session_state.page == "CLOUD":
                         delete_file_cloud(folder_path, st.session_state.user)
                         st.rerun()
         
-        # Files
         st.markdown("### 📄 File")
         selected = []
         
@@ -1154,9 +1234,9 @@ elif st.session_state.page == "CLOUD":
             with col2:
                 size_kb = file['size'] / 1024
                 st.markdown(f"""
-                <div style="color: #e0e0e0;">
+                <div style="color: #e8e8e8;">
                     {file['name']}
-                    <span style="color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-left: 10px;">
+                    <span style="color: rgba(255,255,255,0.4); font-size: 0.8rem; margin-left: 10px;">
                         {size_kb:.1f} KB
                     </span>
                 </div>
@@ -1176,7 +1256,6 @@ elif st.session_state.page == "CLOUD":
                     delete_file_cloud(file['full_path'], st.session_state.user)
                     st.rerun()
         
-        # Download selected
         if selected:
             if st.button(f"📦 Tải xuống {len(selected)} file (ZIP)", use_container_width=True):
                 zip_data = download_files_cloud(selected)
@@ -1188,7 +1267,6 @@ elif st.session_state.page == "CLOUD":
                     use_container_width=True
                 )
         
-        # Upload
         with st.expander("📤 Tải file lên"):
             uploaded_files = st.file_uploader("Chọn file", accept_multiple_files=True)
             if uploaded_files:
@@ -1207,7 +1285,7 @@ elif st.session_state.page == "CLOUD":
 # ================== HISTORY ==================
 elif st.session_state.page == "HISTORY":
     st.markdown("""
-    <div style="color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
+    <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
         📜 Lịch sử chat
     </div>
     """, unsafe_allow_html=True)
@@ -1221,7 +1299,7 @@ elif st.session_state.page == "HISTORY":
         
         if not sessions:
             st.markdown("""
-            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.3);">
+            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.4);">
                 <div style="font-size: 3rem; margin-bottom: 10px;">📭</div>
                 <div>Chưa có lịch sử trò chuyện</div>
             </div>
@@ -1231,7 +1309,7 @@ elif st.session_state.page == "HISTORY":
                 with st.expander(f"💬 {s.get('name', 'Chat')} - {s.get('created', '')[:16]}"):
                     msg_count = len(s.get('messages', []))
                     st.markdown(f"""
-                    <div style="color: rgba(255,255,255,0.6);">
+                    <div style="color: rgba(255,255,255,0.7);">
                         📊 {msg_count} tin nhắn
                     </div>
                     """, unsafe_allow_html=True)
@@ -1239,7 +1317,7 @@ elif st.session_state.page == "HISTORY":
                     if s.get('messages'):
                         last = s['messages'][-1].get('content', '')[:100]
                         st.markdown(f"""
-                        <div style="color: rgba(255,255,255,0.4); font-size: 0.9rem; margin: 10px 0;">
+                        <div style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin: 10px 0;">
                             💭 {last}...
                         </div>
                         """, unsafe_allow_html=True)
@@ -1262,7 +1340,7 @@ elif st.session_state.page == "HISTORY":
 # ================== SETTINGS ==================
 elif st.session_state.page == "SETTINGS":
     st.markdown("""
-    <div style="color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
+    <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
         ⚙️ Cài đặt
     </div>
     """, unsafe_allow_html=True)
@@ -1353,7 +1431,7 @@ elif st.session_state.page == "ADMIN":
         st.error("❌ Bạn không có quyền truy cập!")
     else:
         st.markdown("""
-        <div style="color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
+        <div style="color: #ffffff; font-size: 1.5rem; font-weight: 700; margin-bottom: 20px;">
             🛠️ Admin Panel
         </div>
         """, unsafe_allow_html=True)
@@ -1419,14 +1497,14 @@ elif st.session_state.page == "ABOUT":
     st.markdown(f"""
     <div class="glass-card" style="text-align: center;">
         <div style="font-size: 4rem; margin-bottom: 10px;">🚀</div>
-        <div style="color: white; font-size: 2rem; font-weight: 700;">{CONFIG['NAME']}</div>
-        <div style="color: rgba(255,255,255,0.4); font-size: 1rem; margin-bottom: 20px;">
+        <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{CONFIG['NAME']}</div>
+        <div style="color: rgba(255,255,255,0.5); font-size: 1rem; margin-bottom: 20px;">
             Phiên bản {CONFIG['VERSION']}
         </div>
-        <div style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+        <div style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
             Sáng tạo bởi <strong>{CONFIG['CREATOR']}</strong>
         </div>
-        <div style="color: rgba(255,255,255,0.3); font-style: italic;">
+        <div style="color: rgba(255,255,255,0.4); font-style: italic;">
             "Kết nối tri thức, mở ra tương lai"
         </div>
     </div>
@@ -1437,10 +1515,10 @@ elif st.session_state.page == "ABOUT":
     with col1:
         st.markdown("""
         <div class="glass-card">
-            <div style="color: white; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px;">
+            <div style="color: #ffffff; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px;">
                 🤖 Trí tuệ nhân tạo
             </div>
-            <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; line-height: 1.8;">
+            <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.8;">
                 ✅ Chat AI thông minh<br>
                 ✅ Phân tích file văn bản<br>
                 ✅ Xử lý ngôn ngữ tự nhiên<br>
@@ -1452,10 +1530,10 @@ elif st.session_state.page == "ABOUT":
     with col2:
         st.markdown("""
         <div class="glass-card">
-            <div style="color: white; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px;">
+            <div style="color: #ffffff; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px;">
                 ☁️ Lưu trữ đám mây
             </div>
-            <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; line-height: 1.8;">
+            <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.8;">
                 ✅ Quản lý file và thư mục<br>
                 ✅ Tải lên/xuống hàng loạt<br>
                 ✅ Tạo ZIP nhiều file<br>
@@ -1465,7 +1543,7 @@ elif st.session_state.page == "ABOUT":
         """, unsafe_allow_html=True)
     
     st.markdown(f"""
-    <div style="text-align: center; color: rgba(255,255,255,0.2); font-size: 0.8rem; margin-top: 30px;">
+    <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-top: 30px;">
         © 2025-2026 {CONFIG['CREATOR']} · {CONFIG['NAME']}
     </div>
     """, unsafe_allow_html=True)
