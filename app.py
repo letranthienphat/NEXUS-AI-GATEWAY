@@ -12,6 +12,8 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # ================== CẤU HÌNH ==================
 CONFIG = {
@@ -28,15 +30,37 @@ CONFIG = {
     "LOCKOUT_TIME": 15,
 }
 
-# ================== MÃ HÓA ADMIN ==================
-ENCRYPTION_KEY = base64.b64encode(b"nexus-os-gateway-2026-secure-key-32bytes")
-cipher = Fernet(ENCRYPTION_KEY)
+# ================== MÃ HÓA ADMIN (SỬA LỖI FERNET) ==================
+def generate_fernet_key():
+    """Tạo Fernet key từ password cố định"""
+    password = b"nexus-os-gateway-2026-secure-password"
+    salt = b"nexus-salt-2026"
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+    return key
 
-ADMIN_USERNAME_ENCRYPTED = cipher.encrypt(b"Admin2026")
-ADMIN_PASSWORD_ENCRYPTED = cipher.encrypt(b"NexusAI@2026")
-
-ADMIN_USERNAME = cipher.decrypt(ADMIN_USERNAME_ENCRYPTED).decode()
-ADMIN_PASSWORD = cipher.decrypt(ADMIN_PASSWORD_ENCRYPTED).decode()
+# Tạo key và cipher
+try:
+    ENCRYPTION_KEY = generate_fernet_key()
+    cipher = Fernet(ENCRYPTION_KEY)
+    
+    # Mã hóa thông tin admin
+    ADMIN_USERNAME_ENCRYPTED = cipher.encrypt(b"Admin2026")
+    ADMIN_PASSWORD_ENCRYPTED = cipher.encrypt(b"NexusAI@2026")
+    
+    # Giải mã để sử dụng
+    ADMIN_USERNAME = cipher.decrypt(ADMIN_USERNAME_ENCRYPTED).decode()
+    ADMIN_PASSWORD = cipher.decrypt(ADMIN_PASSWORD_ENCRYPTED).decode()
+except Exception as e:
+    # Fallback nếu có lỗi mã hóa
+    ADMIN_USERNAME = "Admin2026"
+    ADMIN_PASSWORD = "NexusAI@2026"
+    print(f"Warning: Encryption failed, using plaintext admin credentials. Error: {e}")
 
 SYSTEM_PROMPT = """Bạn là NEXUS OS GATEWAY, một trợ lý AI đa năng được sáng tạo bởi Lê Trần Thiên Phát.
 Bạn KHÔNG phải là sản phẩm của Meta, OpenAI hay Google. Bạn là trí tuệ nhân tạo độc lập.
