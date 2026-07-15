@@ -14,6 +14,19 @@
       "status": "active",
       "recovery_request": null,
       "role": "user"
+    },
+    "Admin2026": {
+      "password": "NexusAI@2026",
+      "info": {
+        "name": "Administrator",
+        "bio": "Chủ nhân của NEXUS OS GATEWAY",
+        "link": "87ddd8f9-2503-440f-b031-4497342d0547",
+        "avatar": null,
+        "created": "2026-07-15 07:57:13.386883",
+        "email": null
+      },
+      "login_attempts": 0,
+      "locked_until": null
     }
   },
   "user_status": {
@@ -446,6 +459,10 @@
       "username": "ThienPhat",
       "expiry": "2026-05-14 11:44:37.187977",
       "device_id": "7c73ef5b8d3235ae"
+    },
+    "4d3ebc500e16987f55851ccf61fa4bda9d55c027eacbaa13f32d9064fd803047": {
+      "username": "Admin2026",
+      "expiry": "2026-08-14 07:59:42.404192"
     }
   },
   "login_history": {
@@ -478,6 +495,12 @@
         "status": "failed_notfound",
         "device_id": "90daa551604269db",
         "ip": "192.168.0.72, 10.12.125.207"
+      }
+    ],
+    "Admin2026": [
+      {
+        "time": "2026-07-15 07:59:42.404705",
+        "status": "success"
       }
     ]
   },
