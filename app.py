@@ -96,7 +96,7 @@ st.set_page_config(
     page_icon="🚀"
 )
 
-# ================== CSS GIAO DIỆN VỚI FONT TƯƠNG PHẢN CAO ==================
+# ================== CSS GIAO DIỆN TỐI ƯU ==================
 st.markdown("""
 <style>
     /* Reset & Base */
@@ -106,8 +106,8 @@ st.markdown("""
         box-sizing: border-box; 
     }
     
-    /* Font chữ tổng thể - tăng độ tương phản */
-    body, .stApp, div, p, span, label, .stMarkdown {
+    /* Font chữ tổng thể */
+    html, body, .stApp, div, p, span, label, input, textarea, button {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
         color: #f0f0f0 !important;
     }
@@ -124,12 +124,76 @@ st.markdown("""
         border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    /* Sidebar text */
     [data-testid="stSidebar"] .stMarkdown, 
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] div {
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] input {
         color: #e8e8e8 !important;
+    }
+    
+    /* Password input - QUAN TRỌNG */
+    input[type="password"] {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        padding: 12px 16px !important;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    input[type="password"]:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        color: #ffffff !important;
+    }
+    
+    input[type="password"]::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+        font-weight: 300 !important;
+    }
+    
+    /* Text input */
+    input[type="text"], input:not([type]) {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        padding: 12px 16px !important;
+        font-size: 15px !important;
+    }
+    
+    input[type="text"]:focus, input:not([type]):focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        color: #ffffff !important;
+    }
+    
+    input[type="text"]::placeholder, input:not([type])::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+    }
+    
+    /* Textarea */
+    .stTextArea > div > div > textarea {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        color: #f0f0f0 !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        font-family: inherit !important;
+    }
+    
+    .stTextArea > div > div > textarea:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        color: #ffffff !important;
+    }
+    
+    .stTextArea > div > div > textarea::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
     }
     
     /* Cards */
@@ -153,7 +217,7 @@ st.markdown("""
         color: #f0f0f0 !important;
     }
     
-    /* Chat Messages */
+    /* Chat */
     .chat-container {
         background: rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
@@ -214,6 +278,7 @@ st.markdown("""
         transition: all 0.3s ease;
         width: 100%;
         font-size: 14px;
+        font-family: inherit !important;
     }
     
     .stButton > button:hover {
@@ -222,34 +287,12 @@ st.markdown("""
         color: #ffffff !important;
     }
     
-    /* Inputs */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 12px;
-        color: #f0f0f0 !important;
-        padding: 12px 16px;
-        font-size: 14px;
-    }
-    
-    .stTextInput > div > div > input::placeholder,
-    .stTextArea > div > div > textarea::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
-        color: #ffffff !important;
-    }
-    
     /* Labels */
     label, .stLabel {
         color: #d0d0d0 !important;
         font-weight: 500 !important;
         font-size: 14px !important;
+        font-family: inherit !important;
     }
     
     /* Titles */
@@ -300,7 +343,7 @@ st.markdown("""
         border: 1px solid rgba(255, 215, 0, 0.3);
     }
     
-    /* Cloud Storage */
+    /* Cloud */
     .cloud-item {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 12px;
@@ -328,7 +371,7 @@ st.markdown("""
         font-size: 12px;
     }
     
-    /* Progress bar */
+    /* Progress */
     .stProgress > div > div > div > div {
         background: linear-gradient(135deg, #667eea, #764ba2) !important;
     }
@@ -348,38 +391,11 @@ st.markdown("""
         border-radius: 10px;
     }
     
-    /* Animations */
-    .fade-in {
-        animation: fadeIn 0.5s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .main-title { font-size: 2rem; }
-        .glass-card { padding: 15px; }
-    }
-    
-    /* Sidebar text colors */
-    .css-1d391kg p, .css-1d391kg div, .css-1d391kg span {
-        color: #e8e8e8 !important;
-    }
-    
-    /* Headers in sidebar */
-    .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, 
-    .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
-        color: #ffffff !important;
-        font-weight: 600 !important;
-    }
-    
     /* Expander */
     .streamlit-expanderHeader {
         color: #e8e8e8 !important;
         font-weight: 500 !important;
+        font-family: inherit !important;
     }
     
     .streamlit-expanderContent {
@@ -389,27 +405,29 @@ st.markdown("""
     /* Checkbox */
     .stCheckbox label {
         color: #d0d0d0 !important;
+        font-family: inherit !important;
     }
     
-    /* Info/Warning/Success boxes */
-    .stAlert {
-        color: #ffffff !important;
+    /* Selectbox */
+    .stSelectbox label {
+        color: #d0d0d0 !important;
+        font-family: inherit !important;
     }
     
-    .stAlert p {
-        color: #ffffff !important;
-    }
-    
-    /* Code blocks */
-    .stCodeBlock {
-        background: rgba(0, 0, 0, 0.3) !important;
+    .stSelectbox select {
+        background: rgba(255, 255, 255, 0.08) !important;
         color: #f0f0f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        font-family: inherit !important;
     }
     
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] button {
         color: #a0a0a0 !important;
         font-weight: 500 !important;
+        font-family: inherit !important;
     }
     
     .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
@@ -420,10 +438,97 @@ st.markdown("""
     /* File uploader */
     .stFileUploader label {
         color: #d0d0d0 !important;
+        font-family: inherit !important;
     }
     
-    .stFileUploader div {
-        color: #d0d0d0 !important;
+    /* Alerts */
+    .stAlert {
+        color: #ffffff !important;
+    }
+    
+    .stAlert p {
+        color: #ffffff !important;
+        font-family: inherit !important;
+    }
+    
+    /* Info, Success, Warning, Error */
+    .stAlert[data-baseweb="notification"] {
+        font-family: inherit !important;
+    }
+    
+    /* Code blocks */
+    .stCodeBlock {
+        background: rgba(0, 0, 0, 0.3) !important;
+        color: #f0f0f0 !important;
+        font-family: 'Courier New', monospace !important;
+    }
+    
+    /* Number input */
+    .stNumberInput input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #f0f0f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        font-family: inherit !important;
+    }
+    
+    /* Date input */
+    .stDateInput input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #f0f0f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        font-family: inherit !important;
+    }
+    
+    /* Popover */
+    .stPopover {
+        background: rgba(20, 20, 40, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    
+    .stPopover p, .stPopover div, .stPopover label {
+        color: #f0f0f0 !important;
+    }
+    
+    /* Sidebar headers */
+    .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, 
+    .css-1d391kg h4, .css-1d391kg h5, .css-1d391kg h6 {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-family: inherit !important;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-title { font-size: 2rem; }
+        .glass-card { padding: 15px; }
+        input[type="password"], input[type="text"] {
+            font-size: 14px !important;
+            padding: 10px 14px !important;
+        }
+    }
+    
+    /* Fix for password visibility toggle */
+    .stTextInput > div > div > div > input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        font-size: 15px !important;
+    }
+    
+    .stTextInput > div > div > div > input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    .stTextInput > div > div > div > input::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -711,6 +816,21 @@ def download_files_cloud(file_paths: List[str]) -> bytes:
                     zf.writestr(file_name, file_data)
     return zip_buffer.getvalue()
 
+# ================== HÀM QUẢN LÝ MÃ PRO ==================
+def delete_pro_code(code_to_delete: str) -> bool:
+    """Xóa mã PRO khỏi danh sách"""
+    codes = st.session_state.data.get("codes", [])
+    for i, c in enumerate(codes):
+        if isinstance(c, dict) and c.get("code") == code_to_delete:
+            del codes[i]
+            mark_data_modified()
+            return True
+        elif isinstance(c, str) and c == code_to_delete:
+            del codes[i]
+            mark_data_modified()
+            return True
+    return False
+
 # ================== HÀM BẢO MẬT ==================
 def create_session_token(username: str) -> str:
     token = hashlib.sha256(f"{username}{uuid.uuid4()}{datetime.now()}".encode()).hexdigest()
@@ -790,8 +910,7 @@ is_pro = (st.session_state.user in st.session_state.data.get("pro_users", [])) i
 is_admin = st.session_state.user == ADMIN_USERNAME if st.session_state.user else False
 
 def go_to(page):
-    st.session_state.page = page
-    st.rerun()
+    st.session_state.page = page    st.rerun()
 
 def get_badge():
     if st.session_state.guest_mode:
@@ -1390,13 +1509,27 @@ elif st.session_state.page == "SETTINGS":
         
         with tab2:
             st.markdown("### 🎁 Nâng cấp PRO")
-            code = st.text_input("🔑 Nhập mã kích hoạt", type="password").upper()
+            code = st.text_input("🔑 Nhập mã kích hoạt", type="password", placeholder="Nhập mã PRO...").upper()
             
             if st.button("🚀 Kích hoạt", use_container_width=True):
+                found = False
                 for c in st.session_state.data["codes"]:
                     if isinstance(c, dict) and c.get("code") == code:
+                        found = True
+                        # Kiểm tra expiry
+                        if c.get("expiry"):
+                            expiry_date = datetime.fromisoformat(c.get("expiry"))
+                            if datetime.now() > expiry_date:
+                                st.error("❌ Mã đã hết hạn!")
+                                break
+                        # Kiểm tra số lần sử dụng
+                        if c.get("max_uses") and len(c.get("used_by", [])) >= c.get("max_uses"):
+                            st.error("❌ Mã đã hết lượt sử dụng!")
+                            break
+                        # Kích hoạt
                         if st.session_state.user not in st.session_state.data["pro_users"]:
                             st.session_state.data["pro_users"].append(st.session_state.user)
+                            c["used_by"] = c.get("used_by", []) + [st.session_state.user]
                             mark_data_modified()
                             st.balloons()
                             st.success("🎉 Chúc mừng! Bạn đã là PRO!")
@@ -1405,6 +1538,7 @@ elif st.session_state.page == "SETTINGS":
                             st.info("Bạn đã là PRO rồi!")
                         break
                     elif isinstance(c, str) and c == code:
+                        found = True
                         if st.session_state.user not in st.session_state.data["pro_users"]:
                             st.session_state.data["pro_users"].append(st.session_state.user)
                             st.session_state.data["codes"] = [x for x in st.session_state.data["codes"] if x != code]
@@ -1412,8 +1546,10 @@ elif st.session_state.page == "SETTINGS":
                             st.balloons()
                             st.success("🎉 Chúc mừng! Bạn đã là PRO!")
                             st.rerun()
+                        else:
+                            st.info("Bạn đã là PRO rồi!")
                         break
-                else:
+                if not found:
                     st.error("❌ Mã không hợp lệ!")
             
             if is_pro:
@@ -1436,58 +1572,137 @@ elif st.session_state.page == "ADMIN":
         </div>
         """, unsafe_allow_html=True)
         
-        tab1, tab2 = st.tabs(["🎫 Mã PRO", "👥 Người dùng"])
+        tab1, tab2 = st.tabs(["🎫 Quản lý mã PRO", "👥 Quản lý người dùng"])
         
         with tab1:
-            st.markdown("### ➕ Tạo mã PRO")
-            new_code = st.text_input("Mã mới").upper()
+            st.markdown("### ➕ Tạo mã PRO mới")
+            new_code = st.text_input("Mã mới", placeholder="Nhập mã kích hoạt...").upper()
             
             col1, col2 = st.columns(2)
             with col1:
-                has_expiry = st.checkbox("⏰ Có hạn")
+                has_expiry = st.checkbox("⏰ Có hạn sử dụng")
                 expiry = st.date_input("Ngày hết hạn") if has_expiry else None
             with col2:
-                has_limit = st.checkbox("🔢 Giới hạn")
-                max_uses = st.number_input("Số lần", min_value=1, value=1) if has_limit else None
+                has_limit = st.checkbox("🔢 Giới hạn số lần")
+                max_uses = st.number_input("Số lần sử dụng", min_value=1, value=1) if has_limit else None
             
             if st.button("🎁 Tạo mã", use_container_width=True) and new_code:
-                st.session_state.data["codes"].append({
-                    "code": new_code,
-                    "expiry": str(expiry) if expiry else None,
-                    "max_uses": max_uses,
-                    "used_by": []
-                })
-                mark_data_modified()
-                st.success(f"✅ Đã tạo mã: `{new_code}`")
-                st.rerun()
-            
-            st.markdown("### 📋 Danh sách mã")
-            for c in st.session_state.data["codes"]:
-                if isinstance(c, dict):
-                    expiry_txt = c.get("expiry") or "Vĩnh viễn"
-                    used = len(c.get("used_by", []))
-                    max_txt = str(c.get("max_uses")) if c.get("max_uses") else "∞"
-                    st.code(f"📌 {c.get('code')} | Hết hạn: {expiry_txt} | Đã dùng: {used}/{max_txt}")
+                # Kiểm tra mã đã tồn tại
+                exists = False
+                for c in st.session_state.data["codes"]:
+                    if isinstance(c, dict) and c.get("code") == new_code:
+                        exists = True
+                        break
+                    elif isinstance(c, str) and c == new_code:
+                        exists = True
+                        break
+                
+                if exists:
+                    st.error("❌ Mã này đã tồn tại!")
                 else:
-                    st.code(f"📌 {c}")
+                    st.session_state.data["codes"].append({
+                        "code": new_code,
+                        "expiry": str(expiry) if expiry else None,
+                        "max_uses": max_uses,
+                        "used_by": []
+                    })
+                    mark_data_modified()
+                    st.success(f"✅ Đã tạo mã: `{new_code}`")
+                    st.rerun()
+            
+            st.markdown("---")
+            st.markdown("### 📋 Danh sách mã PRO")
+            
+            codes = st.session_state.data.get("codes", [])
+            if not codes:
+                st.info("Chưa có mã PRO nào.")
+            else:
+                for i, c in enumerate(codes):
+                    col1, col2, col3, col4 = st.columns([2, 1.5, 1.5, 1])
+                    
+                    if isinstance(c, dict):
+                        code = c.get('code', '')
+                        expiry_txt = c.get('expiry') or "Vĩnh viễn"
+                        used = len(c.get('used_by', []))
+                        max_txt = str(c.get('max_uses')) if c.get('max_uses') else "∞"
+                        
+                        # Hiển thị trạng thái
+                        is_expired = False
+                        if c.get('expiry'):
+                            try:
+                                expiry_date = datetime.fromisoformat(c.get('expiry'))
+                                if datetime.now() > expiry_date:
+                                    is_expired = True
+                            except:
+                                pass
+                        
+                        is_full = c.get('max_uses') and used >= c.get('max_uses')
+                        
+                        status_emoji = "✅" if not is_expired and not is_full else "❌"
+                        status_text = "Hết hạn" if is_expired else "Hết lượt" if is_full else "Còn hiệu lực"
+                        
+                        col1.write(f"**{code}**")
+                        col2.write(f"⏰ {expiry_txt}")
+                        col3.write(f"📊 {used}/{max_txt}")
+                        col4.write(f"{status_emoji} {status_text}")
+                        
+                        # Nút xóa
+                        if col4.button(f"🗑️ Xóa", key=f"del_code_{i}"):
+                            if delete_pro_code(code):
+                                st.success(f"✅ Đã xóa mã `{code}`")
+                                st.rerun()
+                    else:
+                        # Trường hợp code là string (tương thích ngược)
+                        col1.write(f"**{c}**")
+                        col2.write("Vĩnh viễn")
+                        col3.write("∞")
+                        if col4.button(f"🗑️ Xóa", key=f"del_code_str_{i}"):
+                            if delete_pro_code(c):
+                                st.success(f"✅ Đã xóa mã `{c}`")
+                                st.rerun()
+                    st.divider()
         
         with tab2:
             st.markdown("### 👥 Quản lý người dùng")
-            for username, user_data in st.session_state.data["users"].items():
-                col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+            
+            users = st.session_state.data.get("users", {})
+            pro_users = st.session_state.data.get("pro_users", [])
+            
+            for username, user_data in users.items():
+                col1, col2, col3, col4 = st.columns([2, 2, 1.5, 1.5])
                 col1.write(f"**{username}**")
                 col2.write(user_data['info'].get('name', ''))
                 
-                is_pro_user = username in st.session_state.data.get("pro_users", [])
+                is_pro_user = username in pro_users
                 col3.write("💎 PRO" if is_pro_user else "🆓 FREE")
                 
                 if username != ADMIN_USERNAME:
-                    if col4.button(f"🗑️ Xóa", key=f"del_{username}", use_container_width=True):
-                        del st.session_state.data["users"][username]
-                        if username in st.session_state.data.get("pro_users", []):
-                            st.session_state.data["pro_users"].remove(username)
-                        mark_data_modified()
-                        st.rerun()
+                    col4_1, col4_2 = st.columns(2)
+                    with col4_1:
+                        # Nút toggle PRO
+                        if is_pro_user:
+                            if st.button(f"⬇️ Hạ PRO", key=f"downgrade_{username}", use_container_width=True):
+                                if username in st.session_state.data["pro_users"]:
+                                    st.session_state.data["pro_users"].remove(username)
+                                    mark_data_modified()
+                                    st.success(f"✅ Đã hạ cấp {username}")
+                                    st.rerun()
+                        else:
+                            if st.button(f"⬆️ Lên PRO", key=f"upgrade_{username}", use_container_width=True):
+                                if username not in st.session_state.data["pro_users"]:
+                                    st.session_state.data["pro_users"].append(username)
+                                    mark_data_modified()
+                                    st.success(f"✅ Đã nâng cấp {username} lên PRO")
+                                    st.rerun()
+                    with col4_2:
+                        if st.button(f"🗑️ Xóa", key=f"del_user_{username}", use_container_width=True):
+                            if username in st.session_state.data["users"]:
+                                del st.session_state.data["users"][username]
+                                if username in st.session_state.data.get("pro_users", []):
+                                    st.session_state.data["pro_users"].remove(username)
+                                mark_data_modified()
+                                st.success(f"✅ Đã xóa user {username}")
+                                st.rerun()
                 else:
                     col4.write("👑 Admin")
                 st.divider()
