@@ -910,7 +910,8 @@ is_pro = (st.session_state.user in st.session_state.data.get("pro_users", [])) i
 is_admin = st.session_state.user == ADMIN_USERNAME if st.session_state.user else False
 
 def go_to(page):
-    st.session_state.page = page    st.rerun()
+    st.session_state.page = page
+    st.rerun()
 
 def get_badge():
     if st.session_state.guest_mode:
