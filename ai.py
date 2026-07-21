@@ -124,7 +124,6 @@ class SettingsWindow(ctk.CTkToplevel):
         path = dialog_path.get_input()
         if not path: return
         
-        # Chuẩn hóa đường dẫn: Nếu truyền file ở thư mục hiện tại thì tự chuyển thành đường dẫn tuyệt đối chính xác
         raw_path = path.strip('"').strip("'")
         if not os.path.isabs(raw_path):
             raw_path = os.path.join(BASE_DIR, raw_path)
@@ -201,7 +200,6 @@ class ChatApp(ctk.CTk):
         self.current_streaming_bubble = None
         self.chat_buttons_refs = {}
         self.settings_window = None
-        self.placeholder_text = ""
         
         self.load_settings_data()
         self.load_history_data()
@@ -216,7 +214,6 @@ class ChatApp(ctk.CTk):
                 "status_failed": "Lỗi nạp file",
                 "btn_load": "Khởi động bộ não AI",
                 "btn_unload": "Giải phóng RAM",
-                "placeholder_msg": "Nhập tin nhắn tới AI...",
                 "btn_send": "GỬI",
                 "sys_offline_msg": "Hệ thống: AI đang ngoại tuyến. Hãy nhấn nút khởi động phía trên.",
                 "sys_online_msg": "Hệ thống: Kết nối thành công cục bộ. Hãy bắt đầu chat.",
@@ -242,7 +239,6 @@ class ChatApp(ctk.CTk):
                 "status_failed": "Load Failed",
                 "btn_load": "Boot AI Engine",
                 "btn_unload": "Free Up RAM",
-                "placeholder_msg": "Type a message to AI...",
                 "btn_send": "SEND",
                 "sys_offline_msg": "System: AI is offline. Please boot the engine above.",
                 "sys_online_msg": "System: Connected successfully. Start chatting.",
@@ -322,16 +318,13 @@ class ChatApp(ctk.CTk):
         self.scroll_chat_view = ctk.CTkScrollableFrame(self.main_area, fg_color="#121212", corner_radius=0)
         self.scroll_chat_view.pack(fill="both", expand=True, padx=10, pady=5)
         
-        # --- THANH NHẬP LIỆU PHÍA DƯỚI (MÀU CHỮ TRẮNG) ---
+        # --- THANH NHẬP LIỆU PHÍA DƯỚI (MÀU CHỮ TRẮNG, KHÔNG DÙNG VĂN BẢN GỢI Ý) ---
         self.frame_input = ctk.CTkFrame(self.main_area, fg_color="#1a1a1a", height=60, corner_radius=0)
         self.frame_input.pack(fill="x", side="bottom")
         
         self.entry_msg = ctk.CTkEntry(self.frame_input, font=("Segoe UI", 14), fg_color="#262626", text_color="#ffffff", border_width=0, height=40)
         self.entry_msg.pack(side="left", fill="x", expand=True, padx=(15, 10), pady=10)
         self.entry_msg.bind("<Return>", lambda event: self.send_message())
-        
-        self.entry_msg.bind("<FocusIn>", self.on_entry_focus_in)
-        self.entry_msg.bind("<FocusOut>", self.on_entry_focus_out)
         
         self.btn_send = ctk.CTkButton(self.frame_input, text="", width=70, height=40, command=self.send_message, state="normal", font=("Segoe UI", 13, "bold"), fg_color="#0068ff", hover_color="#0052cc", text_color="#ffffff")
         self.btn_send.pack(side="right", padx=(0, 15), pady=10)
@@ -340,22 +333,11 @@ class ChatApp(ctk.CTk):
         self.refresh_sidebar()
         self.select_default_or_first_chat()
 
-    def on_entry_focus_in(self, event):
-        if self.entry_msg.get() == self.placeholder_text:
-            self.entry_msg.delete(0, "end")
-            self.entry_msg.configure(text_color="#ffffff")
-
-    def on_entry_focus_out(self, event):
-        if self.entry_msg.get().strip() == "":
-            self.entry_msg.delete(0, "end")
-            self.entry_msg.insert(0, self.placeholder_text)
-            self.entry_msg.configure(text_color="#ffffff")
-
     def register_dynamic_translation(self, code, name):
         self.translations[code] = {
             "btn_new_chat": f"+ {name}", "status_offline": f"Offline ({code.upper()})", "status_loading": "Loading...",
             "status_unloading": "Unloading...", "status_online": "Online", "status_failed": "Failed", "btn_load": f"Boot AI ({code.upper()})",
-            "btn_unload": "Free RAM", "placeholder_msg": "Type message...", "btn_send": "SEND",
+            "btn_unload": "Free RAM", "btn_send": "SEND",
             "sys_offline_msg": "AI Offline", "sys_online_msg": "AI Connected", "new_chat_title": "New Chat",
             "lbl_model_manage": "MODELS MANAGEMENT", "lbl_lang_manage": "LANGUAGES MANAGEMENT",
             "btn_settings": f"⚙️ Settings ({code.upper()})",
@@ -374,7 +356,6 @@ class ChatApp(ctk.CTk):
             except:
                 pass
         
-        # TỰ ĐỘNG THÔNG MINH: Quét tất cả file .gguf nằm cùng thư mục để đưa vào danh sách nếu file json chưa được tạo
         gguf_files = [file for file in os.listdir(BASE_DIR) if file.endswith(".gguf")]
         detected_models = {}
         current_active = "Qwen2.5-1.5B"
@@ -385,7 +366,6 @@ class ChatApp(ctk.CTk):
                 detected_models[name_label] = os.path.join(BASE_DIR, file)
             current_active = list(detected_models.keys())[0]
         else:
-            # Dự phòng tên file mặc định nếu thư mục hiện tại trống rỗng
             detected_models = {
                 "Qwen2.5-1.5B": os.path.join(BASE_DIR, "qwen2.5-1.5b-instruct-q3_k_m.gguf")
             }
@@ -401,9 +381,7 @@ class ChatApp(ctk.CTk):
         }
         self.save_settings_data()
 
-    # BỔ SUNG HÀM LƯU CONFIG PHỤC HỒI LỖI ATTRIBUTEERROR
     def save_settings_data(self):
-        """Ghi cấu hình cài đặt hiện tại xuống file JSON cục bộ"""
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(self.config, f, ensure_ascii=False, indent=4)
 
@@ -445,15 +423,6 @@ class ChatApp(ctk.CTk):
         self.btn_new_chat.configure(text=trans["btn_new_chat"])
         self.btn_send.configure(text=trans["btn_send"])
         self.btn_open_settings.configure(text=trans["btn_settings"])
-        
-        old_placeholder = self.placeholder_text
-        self.placeholder_text = trans["placeholder_msg"]
-        
-        current_text = self.entry_msg.get()
-        if current_text == "" or current_text == old_placeholder:
-            self.entry_msg.delete(0, "end")
-            self.entry_msg.insert(0, self.placeholder_text)
-            self.entry_msg.configure(text_color="#ffffff")
         
         if self.ai is None:
             self.lbl_status.configure(text=trans["status_offline"], text_color="#ffffff")
@@ -621,8 +590,6 @@ class ChatApp(ctk.CTk):
         active_model_name = self.config["current_model"]
         model_path = self.config["models"].get(active_model_name, "")
         
-        # KIỂM TRA PHÒNG HỜ: Nếu di chuyển thư mục dẫn đến sai đường dẫn tuyệt đối cũ
-        # Phần mềm sẽ tự kiểm tra xem file mô hình có nằm ngay trong thư mục cùng cấp hiện tại hay không
         if not os.path.exists(model_path):
             filename = os.path.basename(model_path)
             local_fallback_path = os.path.join(BASE_DIR, filename)
@@ -635,17 +602,15 @@ class ChatApp(ctk.CTk):
             if not os.path.exists(model_path):
                 raise FileNotFoundError()
                 
-            # ĐIỀU CHỈNH TỐI ƯU HÓA PHẦN CỨNG LINH HOẠT (ĐÁP ỨNG MỌI THIẾT BỊ)
             detected_cores = os.cpu_count() or 4
-            # Phân bổ luồng xử lý thông minh để CPU chạy hết công suất mà không bị nghẽn hệ thống
             optimal_threads = max(2, detected_cores - 1) if detected_cores > 2 else detected_cores
 
             self.ai = Llama(
                 model_path=model_path, 
-                n_ctx=512,                  # Thu gọn dung lượng ngữ cảnh để chống tràn RAM trên máy yếu
-                n_threads=optimal_threads,   # Tự động thay đổi tương thích với cấu hình CPU của thiết bị
-                use_mmap=True,               # Bật ánh xạ SSD làm bộ nhớ ảo giảm áp lực trực tiếp lên thanh RAM
-                use_mlock=False,             # Cho phép hệ điều hành chủ động giải phóng bộ nhớ khi cần, tránh đứng máy
+                n_ctx=512,                  
+                n_threads=optimal_threads,   
+                use_mmap=True,               
+                use_mlock=False,             
                 verbose=False
             )
             self.btn_load.configure(state="normal")
@@ -675,25 +640,18 @@ class ChatApp(ctk.CTk):
 
     def send_message(self):
         cau_hoi = self.entry_msg.get().strip()
-        if not cau_hoi or cau_hoi == self.placeholder_text or not self.current_chat_id: 
+        if not cau_hoi or not self.current_chat_id: 
             return
-            
-        has_focus = (self.focus_get() == self.entry_msg)
         
         if self.ai is None:
             self.add_bubble_message(cau_hoi, "user")
             self.entry_msg.delete(0, "end")
-            if not has_focus:
-                self.entry_msg.insert(0, self.placeholder_text)
             lang = self.config["current_lang"]
             trans = self.translations.get(lang, self.translations["en"])
             self.add_bubble_message(trans["sys_offline_msg"], "system")
             return
             
         self.entry_msg.delete(0, "end")
-        if not has_focus:
-            self.entry_msg.insert(0, self.placeholder_text)
-            
         self.add_bubble_message(cau_hoi, "user")
         self.current_streaming_bubble = self.add_bubble_message("...", "assistant")
         self.btn_send.configure(state="disabled")
