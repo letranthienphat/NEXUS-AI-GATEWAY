@@ -8,7 +8,8 @@ import subprocess
 def auto_install_libraries():
     required_libraries = {
         "customtkinter": "customtkinter",
-        "llama_cpp": "llama-cpp-python"
+        "llama_cpp": "llama-cpp-python",
+        "psutil": "psutil"  # Thêm thư viện kiểm tra RAM hệ thống
     }
     missing_libraries = []
     for lib_name, pip_name in required_libraries.items():
@@ -45,6 +46,7 @@ import json
 import threading
 import time
 import gc
+import psutil  # Dùng để check RAM thực tế
 import customtkinter as ctk
 from llama_cpp import Llama
 
@@ -54,7 +56,6 @@ DATA_FILE = os.path.join(BASE_DIR, "data.json")
 HISTORY_FILE = os.path.join(BASE_DIR, "history.json")
 
 class SettingsWindow(ctk.CTkToplevel):
-    """Cửa sổ cài đặt phụ gom gọn tất cả tính năng quản lý mô hình và ngôn ngữ"""
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
@@ -66,7 +67,6 @@ class SettingsWindow(ctk.CTkToplevel):
         
         self.configure(fg_color="#1a1a1a")
         
-        # Tiêu đề quản lý mô hình
         self.lbl_model = ctk.CTkLabel(self, text="", font=("Segoe UI", 13, "bold"), text_color="#ffffff")
         self.lbl_model.pack(anchor="w", padx=20, pady=(20, 5))
         
@@ -86,7 +86,6 @@ class SettingsWindow(ctk.CTkToplevel):
         self.btn_del_model = ctk.CTkButton(self.frame_model_buttons, text="", width=180, height=30, font=("Segoe UI", 12), fg_color="#c9302c", hover_color="#a72825", text_color="#ffffff", command=self.del_model_action)
         self.btn_del_model.pack(side="right")
         
-        # Tiêu đề quản lý ngôn ngữ mở rộng
         self.lbl_lang = ctk.CTkLabel(self, text="", font=("Segoe UI", 13, "bold"), text_color="#ffffff")
         self.lbl_lang.pack(anchor="w", padx=20, pady=(20, 5))
         
@@ -195,6 +194,7 @@ class ChatApp(ctk.CTk):
         self.resizable(True, True)
         
         self.ai = None
+        self.allocated_ctx = 2048  # Giá trị mặc định ban đầu
         self.sidebar_visible = True
         self.bubble_widgets = []
         self.current_streaming_bubble = None
@@ -261,14 +261,11 @@ class ChatApp(ctk.CTk):
             if lang_code not in self.translations:
                 self.register_dynamic_translation(lang_code, lang_info['name'])
 
-        # ---------------- GIAO DIỆN TỔNG THỂ (GRID 2 CỘT) ----------------
         self.grid_columnconfigure(0, weight=1) 
         self.grid_columnconfigure(1, weight=3) 
         self.grid_rowconfigure(0, weight=1)
         
-        # ==========================================
-        # PHẦN 1: SIDEBAR TỐI GIẢN (CHỮ TRẮNG TOÀN BỘ)
-        # ==========================================
+        # SIDEBAR
         self.sidebar = ctk.CTkFrame(self, corner_radius=0, fg_color="#1e1e1e", width=280)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_propagate(False)
@@ -291,9 +288,7 @@ class ChatApp(ctk.CTk):
         self.btn_open_settings = ctk.CTkButton(self.sidebar, text="", height=36, font=("Segoe UI", 12, "bold"), fg_color="#2b2b2b", hover_color="#3a3a3a", text_color="#ffffff", command=self.open_settings_window)
         self.btn_open_settings.pack(fill="x", padx=12, pady=12)
 
-        # ==========================================
-        # PHẦN 2: KHUNG TRÒ CHUYỆN CHÍNH (MAIN AREA)
-        # ==========================================
+        # MAIN CHAT
         self.main_area = ctk.CTkFrame(self, fg_color="#121212", corner_radius=0)
         self.main_area.grid(row=0, column=1, sticky="nsew")
         
@@ -318,7 +313,7 @@ class ChatApp(ctk.CTk):
         self.scroll_chat_view = ctk.CTkScrollableFrame(self.main_area, fg_color="#121212", corner_radius=0)
         self.scroll_chat_view.pack(fill="both", expand=True, padx=10, pady=5)
         
-        # --- THANH NHẬP LIỆU PHÍA DƯỚI (MÀU CHỮ TRẮNG, KHÔNG DÙNG VĂN BẢN GỢI Ý) ---
+        # INPUT AREA
         self.frame_input = ctk.CTkFrame(self.main_area, fg_color="#1a1a1a", height=60, corner_radius=0)
         self.frame_input.pack(fill="x", side="bottom")
         
@@ -428,7 +423,7 @@ class ChatApp(ctk.CTk):
             self.lbl_status.configure(text=trans["status_offline"], text_color="#ffffff")
             self.btn_load.configure(text=trans["btn_load"], fg_color="#333333")
         else:
-            self.lbl_status.configure(text=trans["status_online"], text_color="#ffffff")
+            self.lbl_status.configure(text=f"{trans['status_online']} ({self.allocated_ctx} CTX)", text_color="#ffffff")
             self.btn_load.configure(text=trans["btn_unload"], fg_color="#c9302c")
 
     def open_settings_window(self):
@@ -547,6 +542,9 @@ class ChatApp(ctk.CTk):
             bubble = ctk.CTkLabel(row_container, text=text, fg_color="#262626", text_color="#ffffff", font=("Segoe UI", 13), corner_radius=12, padx=12, pady=8, wraplength=450, justify="left")
             bubble.pack(side="left", anchor="w")
             return bubble
+        elif sender == "warning":
+            bubble = ctk.CTkLabel(row_container, text=text, text_color="#ff9900", font=("Segoe UI", 11, "bold"), justify="center")
+            bubble.pack(side="top", pady=2)
         else:
             bubble = ctk.CTkLabel(row_container, text=text, text_color="#ffffff", font=("Segoe UI", 11, "italic"), justify="center")
             bubble.pack(side="top", pady=2)
@@ -605,9 +603,18 @@ class ChatApp(ctk.CTk):
             detected_cores = os.cpu_count() or 4
             optimal_threads = max(2, detected_cores - 1) if detected_cores > 2 else detected_cores
 
+            # THUẬT TOÁN KIỂM TRA RAM TRỐNG VÀ PHÂN BỔ TỰ ĐỘNG
+            free_ram_gb = psutil.virtual_memory().available / (1024 ** 3)
+            if free_ram_gb < 2.0:
+                self.allocated_ctx = 2048
+            elif free_ram_gb < 4.0:
+                self.allocated_ctx = 4096
+            else:
+                self.allocated_ctx = 8192
+
             self.ai = Llama(
                 model_path=model_path, 
-                n_ctx=512,                  
+                n_ctx=self.allocated_ctx,  # Tự động gán giới hạn thông minh                 
                 n_threads=optimal_threads,   
                 use_mmap=True,               
                 use_mlock=False,             
@@ -687,6 +694,18 @@ class ChatApp(ctk.CTk):
                 current_chat["messages"].append({"role": "assistant", "content": cau_tra_loi_day_du})
                 self.save_history_data()
                 
+                # HỆ THỐNG TỰ ĐỘNG ĐO ĐỘ DÀI VÀ CẢNH BÁO KHI SẮP HẾT BỘ NHỚ (Đạt 80% ngưỡng)
+                try:
+                    all_text = "".join([m["content"] for m in current_chat["messages"]])
+                    estimated_tokens = len(all_text.split()) * 1.3  # Ước lượng token thực tế
+                    if estimated_tokens >= (self.allocated_ctx * 0.8):
+                        warn_text = f"⚠️ Cảnh báo hệ thống: Dung lượng hội thoại đã đạt {int((estimated_tokens/self.allocated_ctx)*100)}% giới hạn RAM cấp phát ({self.allocated_ctx} từ). AI có thể sẽ quên một số tin nhắn cũ hoặc phản hồi chậm đi."
+                        if self.config["current_lang"] == "en":
+                            warn_text = f"⚠️ System Warning: Conversation memory has reached {int((estimated_tokens/self.allocated_ctx)*100)}% of allocated RAM limit ({self.allocated_ctx} tokens). AI may forget older context."
+                        self.after(0, lambda: self.add_bubble_message(warn_text, "warning"))
+                except:
+                    pass
+
                 if is_first_message and self.ai is not None:
                     threading.Thread(target=self.generate_title_with_ai, args=(self.current_chat_id, cau_hoi, cau_tra_loi_day_du), daemon=True).start()
         except:
