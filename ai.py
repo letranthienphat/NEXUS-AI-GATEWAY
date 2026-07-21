@@ -9,7 +9,7 @@ def auto_install_libraries():
     required_libraries = {
         "customtkinter": "customtkinter",
         "llama_cpp": "llama-cpp-python",
-        "psutil": "psutil"  # Thêm thư viện kiểm tra RAM hệ thống
+        "psutil": "psutil"
     }
     missing_libraries = []
     for lib_name, pip_name in required_libraries.items():
@@ -46,11 +46,10 @@ import json
 import threading
 import time
 import gc
-import psutil  # Dùng để check RAM thực tế
+import psutil
 import customtkinter as ctk
 from llama_cpp import Llama
 
-# TỰ ĐỘNG ĐỊNH VỊ THƯ MỤC CÙNG CẤP VỚI FILE SCRIPT
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
 HISTORY_FILE = os.path.join(BASE_DIR, "history.json")
@@ -194,12 +193,14 @@ class ChatApp(ctk.CTk):
         self.resizable(True, True)
         
         self.ai = None
-        self.allocated_ctx = 2048  # Giá trị mặc định ban đầu
+        self.allocated_ctx = 2048
         self.sidebar_visible = True
         self.bubble_widgets = []
         self.current_streaming_bubble = None
         self.chat_buttons_refs = {}
         self.settings_window = None
+        self.context_menu_frame = None
+        self.current_chat_id = None
         
         self.load_settings_data()
         self.load_history_data()
@@ -228,7 +229,10 @@ class ChatApp(ctk.CTk):
                 "prompt_model_name": "Nhập tên nhãn của mô hình mới (VD: Llama3):",
                 "prompt_model_path": "Nhập đường dẫn tuyệt đối tới file .gguf:",
                 "prompt_lang_code": "Nhập mã ngôn ngữ viết tắt (Ví dụ: fr, ja, ru):",
-                "prompt_lang_name": "Nhập tên hiển thị (Ví dụ: French):"
+                "prompt_lang_name": "Nhập tên hiển thị (Ví dụ: French):",
+                "menu_rename": "✏️ Đổi tên",
+                "menu_delete": "🗑️ Xóa",
+                "prompt_rename_title": "Nhập tên mới cho cuộc trò chuyện:"
             },
             "en": {
                 "btn_new_chat": "+ Create New Chat",
@@ -253,7 +257,10 @@ class ChatApp(ctk.CTk):
                 "prompt_model_name": "Enter new model label name (e.g. Llama3):",
                 "prompt_model_path": "Enter absolute path to .gguf file:",
                 "prompt_lang_code": "Enter language code abbreviation (e.g. fr, ja):",
-                "prompt_lang_name": "Enter display name (e.g. French):"
+                "prompt_lang_name": "Enter display name (e.g. French):",
+                "menu_rename": "✏️ Rename",
+                "menu_delete": "🗑️ Delete",
+                "prompt_rename_title": "Enter new conversation title:"
             }
         }
         
@@ -324,6 +331,8 @@ class ChatApp(ctk.CTk):
         self.btn_send = ctk.CTkButton(self.frame_input, text="", width=70, height=40, command=self.send_message, state="normal", font=("Segoe UI", 13, "bold"), fg_color="#0068ff", hover_color="#0052cc", text_color="#ffffff")
         self.btn_send.pack(side="right", padx=(0, 15), pady=10)
         
+        self.bind("<Button-1>", self.close_context_menu_safely)
+        
         self.apply_language_ui()
         self.refresh_sidebar()
         self.select_default_or_first_chat()
@@ -339,7 +348,9 @@ class ChatApp(ctk.CTk):
             "settings_add_model": "+ Add Model", "settings_del_model": "✕ Delete Model",
             "settings_add_lang": "+ Add New Language", "settings_del_lang": "✕ Delete Current Language",
             "prompt_model_name": "Model name:", "prompt_model_path": "Model path .gguf:",
-            "prompt_lang_code": "Language code:", "prompt_lang_name": "Language name:"
+            "prompt_lang_code": "Language code:", "prompt_lang_name": "Language name:",
+            "menu_rename": "Rename", "menu_delete": "Delete",
+            "prompt_rename_title": "Enter new title:"
         }
 
     def load_settings_data(self):
@@ -473,15 +484,58 @@ class ChatApp(ctk.CTk):
         self.refresh_sidebar()
         self.switch_chat(chat_id)
 
+    # ĐÃ SỬA: Cập nhật lại logic để tự động chuyển focus ID an toàn, đồng bộ ngay lập tức lên UI
     def delete_chat(self, chat_id):
         self.all_chats = [c for c in self.all_chats if c["id"] != chat_id]
         self.save_history_data()
         self.refresh_sidebar()
-        if self.current_chat_id == chat_id:
+        
+        if self.current_chat_id == chat_id or not self.all_chats:
             self.current_chat_id = None
             self.select_default_or_first_chat()
-        elif not self.all_chats:
-            self.select_default_or_first_chat()
+        else:
+            # Nếu đang ở room khác, giữ nguyên room đó
+            self.switch_chat(self.current_chat_id)
+
+    def rename_chat(self, chat_id):
+        lang = self.config["current_lang"]
+        trans = self.translations.get(lang, self.translations["en"])
+        chat_data = self.get_chat_by_id(chat_id)
+        if not chat_data: return
+        
+        dialog = ctk.CTkInputDialog(text=trans["prompt_rename_title"], title="Rename Chat")
+        new_title = dialog.get_input()
+        if new_title and new_title.strip():
+            chat_data["title"] = new_title.strip()
+            self.save_history_data()
+            self.refresh_sidebar()
+            if self.current_chat_id == chat_id:
+                self.switch_chat(chat_id)
+
+    def show_custom_context_menu(self, event, chat_id):
+        self.close_context_menu_safely()
+        
+        lang = self.config["current_lang"]
+        trans = self.translations.get(lang, self.translations["en"])
+        
+        self.context_menu_frame = ctk.CTkFrame(self, fg_color="#262626", corner_radius=6, border_width=1, border_color="#333333")
+        
+        btn_rename = ctk.CTkButton(self.context_menu_frame, text=trans["menu_rename"], anchor="w", fg_color="transparent", hover_color="#3a3a3a", text_color="#ffffff", font=("Segoe UI", 12), height=28, corner_radius=4, command=lambda: [self.rename_chat(chat_id), self.close_context_menu_safely()])
+        btn_rename.pack(fill="x", padx=5, pady=(5, 2))
+        
+        btn_delete = ctk.CTkButton(self.context_menu_frame, text=trans["menu_delete"], anchor="w", fg_color="transparent", hover_color="#5a2222", text_color="#ff5555", font=("Segoe UI", 12), height=28, corner_radius=4, command=lambda: [self.delete_chat(chat_id), self.close_context_menu_safely()])
+        btn_delete.pack(fill="x", padx=5, pady=(2, 5))
+        
+        x = self.winfo_pointerx() - self.winfo_rootx()
+        y = self.winfo_pointery() - self.winfo_rooty()
+        
+        self.context_menu_frame.place(x=x, y=y)
+        return "break"
+
+    def close_context_menu_safely(self, event=None):
+        if self.context_menu_frame and self.context_menu_frame.winfo_exists():
+            self.context_menu_frame.destroy()
+            self.context_menu_frame = None
 
     def switch_chat(self, chat_id):
         if not any(c["id"] == chat_id for c in self.all_chats): return
@@ -514,8 +568,8 @@ class ChatApp(ctk.CTk):
             btn_title = ctk.CTkButton(item_frame, text=f"💬  {display_title}", anchor="w", fg_color="transparent", hover_color="#262626", font=("Segoe UI", 13), text_color="#ffffff", height=35, command=lambda cid=chat_id: self.switch_chat(cid))
             btn_title.pack(side="left", fill="x", expand=True)
             
-            btn_del = ctk.CTkButton(item_frame, text="✕", width=25, height=35, fg_color="transparent", hover_color="#3a1e1e", text_color="#ffffff", font=("Segoe UI", 12), command=lambda cid=chat_id: self.delete_chat(cid))
-            btn_del.pack(side="right", padx=(2, 0))
+            btn_title.bind("<Button-3>", lambda e, cid=chat_id: self.show_custom_context_menu(e, cid))
+            item_frame.bind("<Button-3>", lambda e, cid=chat_id: self.show_custom_context_menu(e, cid))
             
             self.chat_buttons_refs[chat_id] = {"frame": item_frame, "btn": btn_title}
 
@@ -603,7 +657,6 @@ class ChatApp(ctk.CTk):
             detected_cores = os.cpu_count() or 4
             optimal_threads = max(2, detected_cores - 1) if detected_cores > 2 else detected_cores
 
-            # THUẬT TOÁN KIỂM TRA RAM TRỐNG VÀ PHÂN BỔ TỰ ĐỘNG
             free_ram_gb = psutil.virtual_memory().available / (1024 ** 3)
             if free_ram_gb < 2.0:
                 self.allocated_ctx = 2048
@@ -614,7 +667,7 @@ class ChatApp(ctk.CTk):
 
             self.ai = Llama(
                 model_path=model_path, 
-                n_ctx=self.allocated_ctx,  # Tự động gán giới hạn thông minh                 
+                n_ctx=self.allocated_ctx,                  
                 n_threads=optimal_threads,   
                 use_mmap=True,               
                 use_mlock=False,             
@@ -670,17 +723,23 @@ class ChatApp(ctk.CTk):
         current_chat["messages"].append({"role": "user", "content": cau_hoi})
         self.save_history_data()
         
-        threading.Thread(target=self.ai_reply_worker, args=(is_first_message, cau_hoi), daemon=True).start()
+        # ĐÃ SỬA: Khóa cứng ID phiên làm việc (session_chat_id) chuyển vào worker nhằm chống lỗi [Error] khi bấm xóa chat bất ngờ
+        threading.Thread(target=self.ai_reply_worker, args=(is_first_message, cau_hoi, self.current_chat_id), daemon=True).start()
 
-    def ai_reply_worker(self, is_first_message, cau_hoi):
+    # ĐÃ SỬA: Tiếp nhận tham số `session_chat_id` cố định để xử lý hội thoại độc lập độc quyền
+    def ai_reply_worker(self, is_first_message, cau_hoi, session_chat_id):
         try:
-            current_chat = self.get_chat_by_id(self.current_chat_id)
+            current_chat = self.get_chat_by_id(session_chat_id)
             if not current_chat: return
             
             phan_hoi = self.ai.create_chat_completion(messages=current_chat["messages"], stream=True)
             cau_tra_loi_day_du = ""
             for chu_cai in phan_hoi:
                 if self.ai is None: break
+                
+                # Kiểm tra nếu người dùng đã đổi sang chat khác hoặc xóa luôn chat này thì ngừng luồng ngay
+                if self.current_chat_id != session_chat_id: return
+                
                 delta = chu_cai['choices'][0]['delta']
                 if 'content' in delta:
                     chu = delta['content']
@@ -689,15 +748,14 @@ class ChatApp(ctk.CTk):
                         self.current_streaming_bubble.configure(text=cau_tra_loi_day_du)
                         self.scroll_chat_view._parent_canvas.yview_moveto(1.0)
                         
-            current_chat = self.get_chat_by_id(self.current_chat_id)
-            if current_chat:
+            current_chat = self.get_chat_by_id(session_chat_id)
+            if current_chat and self.current_chat_id == session_chat_id:
                 current_chat["messages"].append({"role": "assistant", "content": cau_tra_loi_day_du})
                 self.save_history_data()
                 
-                # HỆ THỐNG TỰ ĐỘNG ĐO ĐỘ DÀI VÀ CẢNH BÁO KHI SẮP HẾT BỘ NHỚ (Đạt 80% ngưỡng)
                 try:
                     all_text = "".join([m["content"] for m in current_chat["messages"]])
-                    estimated_tokens = len(all_text.split()) * 1.3  # Ước lượng token thực tế
+                    estimated_tokens = len(all_text.split()) * 1.3
                     if estimated_tokens >= (self.allocated_ctx * 0.8):
                         warn_text = f"⚠️ Cảnh báo hệ thống: Dung lượng hội thoại đã đạt {int((estimated_tokens/self.allocated_ctx)*100)}% giới hạn RAM cấp phát ({self.allocated_ctx} từ). AI có thể sẽ quên một số tin nhắn cũ hoặc phản hồi chậm đi."
                         if self.config["current_lang"] == "en":
@@ -707,12 +765,12 @@ class ChatApp(ctk.CTk):
                     pass
 
                 if is_first_message and self.ai is not None:
-                    threading.Thread(target=self.generate_title_with_ai, args=(self.current_chat_id, cau_hoi, cau_tra_loi_day_du), daemon=True).start()
+                    threading.Thread(target=self.generate_title_with_ai, args=(session_chat_id, cau_hoi, cau_tra_loi_day_du), daemon=True).start()
         except:
-            if self.current_streaming_bubble:
+            if self.current_streaming_bubble and self.current_chat_id == session_chat_id:
                 self.current_streaming_bubble.configure(text="[Error]")
         finally:
-            if self.ai is not None:
+            if self.ai is not None and self.current_chat_id == session_chat_id:
                 self.btn_send.configure(state="normal")
 
     def generate_title_with_ai(self, chat_id, cau_hoi, cau_tra_loi):
